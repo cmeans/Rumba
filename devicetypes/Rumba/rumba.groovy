@@ -1,9 +1,10 @@
 /**
 *  Rumba v1.6
 *  for 900/i7/s9 series
-*  
+*
 *  Version History:
-*   1.6: Implemented device health check (properly this time?), tweaked state logic. 
+*   1.6.1: Replaced pause(1000) with sleep(1000) - cmeans
+*   1.6: Implemented device health check (properly this time?), tweaked state logic.
 *   1.0: Initial release
 *
 *  Copyright 2020 Matvei Vevitsis
@@ -77,7 +78,7 @@ preferences {
         input "localAPI", "bool", title: "Use a local REST gateway for Roomba", description: "Enable this if you have installed a local REST gateway for Roomba, you will need to provide the IP of that gateway", displayDuringSetup: true
     }
     section("Roomba Local Settings") {
-    	input type: "paragraph", title: "Fill these parameters if using a local REST gateway"
+        input type: "paragraph", title: "Fill these parameters if using a local REST gateway"
         input "roomba_host", "string", title:"IP of Roomba local REST Gateway", displayDuringSetup: true
         input "roomba_port", "number", range: "1..65535", defaultValue: 3000, title:"Port of Roomba local REST Gateway", displayDuringSetup: true
     }
@@ -87,7 +88,7 @@ preferences {
         input "roomba_password", "password", title: "Roomba password", displayDuringSetup: true
     }
     section("Misc.") {
-       	//input "sendPushMessage", "enum", title: "Push Notifications", description: "Alert if Roomba encounters a problem", options: ["Yes", "No"], defaultValue: "No", required: true
+           //input "sendPushMessage", "enum", title: "Push Notifications", description: "Alert if Roomba encounters a problem", options: ["Yes", "No"], defaultValue: "No", required: true
         //input "sendAudioMessage", "enum", title: "Audio Notifications", options: ["Yes", "No"], defaultValue: "No", required: true
         //input "audioDevices", "capability.audioNotification", title: "Select a speaker", required: false, multiple: true
         input type: "paragraph", title: "Polling Interval [minutes]", description: "This feature allows you to change the frequency of polling for the robot in minutes (1-59)"
@@ -149,7 +150,7 @@ tiles {
         state "default", label:'Battery ${currentValue}%'
     }
 
-	valueTile("job_count", "device.totalJobs", width: 3, height: 1, decoration: "flat") {
+    valueTile("job_count", "device.totalJobs", width: 3, height: 1, decoration: "flat") {
         state "default", label:'Number of Cleaning Jobs:\n${currentValue} jobs'
     }
     valueTile("job_hr_count", "device.totalJobHrs", width: 3, height: 1, decoration: "flat") {
@@ -182,11 +183,11 @@ tiles {
 //Settings updated
 def updated() {
     //log.debug "Updated settings ${settings}..
-    def interval 
+    def interval
     if (settings.pollInterval){
-    	interval = settings.pollInterval
+        interval = settings.pollInterval
     } else {
-    	interval = 4
+        interval = 4
     }
     runIn(3, "updateDeviceNetworkID")
     schedule("0 0/${interval} * * * ?", poll)  // 4min polling is normal for irobots
@@ -195,7 +196,7 @@ def updated() {
 
 //Installed
 def installed() {
-	initialize()
+    initialize()
 }
 
 //Configuration
@@ -212,7 +213,7 @@ sendEvent(name: "DeviceWatch-DeviceStatus", value: "online")
 sendEvent(name: "DeviceWatch-Enroll", value: [protocol: "cloud", scheme:"untracked"].encodeAsJson(), displayed: false)
 sendEvent(name: 'switch', value: 'off')
 sendEvent(name: 'robotCleanerMovement', value: 'idle')
-//sendEvent(name: 'robotCleanerCleaningMode', value: 'auto') 
+//sendEvent(name: 'robotCleanerCleaningMode', value: 'auto')
 //sendEvent(name: 'robotCleanerTurboMode', value: 'off')
 }
 
@@ -319,50 +320,50 @@ def pollHistory() {
     return localAPI ? null : apiGet()
 }
 def poll() {
-	//Check robot and server connection status at each polling interval
+    //Check robot and server connection status at each polling interval
     //getPingCommand()
-    //if(pingState == true){ 
-    	//Mark device as online in ST app
+    //if(pingState == true){
+        //Mark device as online in ST app
         //sendEvent(name: "DeviceWatch-DeviceStatus", value: "online")
-    	//log.debug "Marked device as online"
-		//Get historical data 
-    	pollHistory()
-    	//Then poll for current status
-    	log.debug "Polling for status ----"
-    	//sendEvent(name: "headline", value: "Polling status API", displayed: false)
-    	state.RoombaCmd = "getStatus"
-		return localAPI ? local_poll() : apiGet()
+        //log.debug "Marked device as online"
+        //Get historical data
+        pollHistory()
+        //Then poll for current status
+        log.debug "Polling for status ----"
+        //sendEvent(name: "headline", value: "Polling status API", displayed: false)
+        state.RoombaCmd = "getStatus"
+        return localAPI ? local_poll() : apiGet()
     //} else {
-        //Mark device as offline 
+        //Mark device as offline
         //sendEvent(name: "DeviceWatch-DeviceStatus", value: "offline")
-    	//log.debug "Marked device as offline"
+        //log.debug "Marked device as offline"
     //}
 }
 
 def sendMsg(message){
-	def msg = message
+    def msg = message
     //Non functioning, removed from preferences
     if(sendPushMessage == "Yes") {
-     	sendPush(msg)
-  	}
+         sendPush(msg)
+      }
     //Non functioning, removed from prefernces
     if(sendAudioMessage == "Yes"){
-     	if(audioDevices){
-  		audioDevices?.each { audioDevice -> 
-       	if (audioDevice.hasCommand("playText")) { //Check if speaker supports TTS 
+         if(audioDevices){
+          audioDevices?.each { audioDevice ->
+           if (audioDevice.hasCommand("playText")) { //Check if speaker supports TTS
              audioDevice.playText(msg)
         } else {
-        if (audioDevice.hasCommand("speak")) { //Check if speaker supports speech synthesis  
-       		 audioDevice.speak(msg.toString())
+        if (audioDevice.hasCommand("speak")) { //Check if speaker supports speech synthesis
+                audioDevice.speak(msg.toString())
         } else {
              audioDevice.playTrack(textToSpeech(msg)?.uri) //All other speakers
         }
-        } 
-  
+        }
+
         }
         }
     }
-    
+
 }
 
 
@@ -370,7 +371,7 @@ def sendMsg(message){
 
 //robotCleanerCleaningMode methods
 def setRobotCleanerCleaningMode(mode){
-	if(mode == 'auto'){
+    if(mode == 'auto'){
     //For debug only
     sendEvent(name: 'robotCleanerCleaningMode', value: 'auto')
     //TODO Set cleaningPasses auto
@@ -394,10 +395,10 @@ def setRobotCleanerCleaningMode(mode){
     sendEvent(name: 'robotCleanerCleaningMode', value: 'stop')
     }
 }
-                         
+
 //robotCleanerTurboMode methods
 def setRobotCleanerTurboMode(mode){
-	if(mode == 'on'){
+    if(mode == 'on'){
     //For debug only
     sendEvent(name: 'robotCleanerTurboMode', value: 'on')
     //TODO Set CarpetBoost 'Performance'
@@ -413,46 +414,46 @@ def setRobotCleanerTurboMode(mode){
     //TODO Set CarpetBoost 'Eco'
     }
 }
-    
+
 //robotCleanerMovement methods
 def setRobotCleanerMovement(mode){
-	def status = device.latestValue("status")
-	if(mode == 'homing'){
-    	//For debug only
-    	sendEvent(name: 'robotCleanerMovement', value: 'homing')
+    def status = device.latestValue("status")
+    if(mode == 'homing'){
+        //For debug only
+        sendEvent(name: 'robotCleanerMovement', value: 'homing')
     }
-	if(mode == 'idle'){
-    	//For debug only
-    	sendEvent(name: 'robotCleanerMovement', value: 'idle')
+    if(mode == 'idle'){
+        //For debug only
+        sendEvent(name: 'robotCleanerMovement', value: 'idle')
         return pause()
     }
     if(mode == 'charging'){
-    	//For debug only
-		//sendEvent(name: 'robotCleanerMovement', value: 'charging' )
+        //For debug only
+        //sendEvent(name: 'robotCleanerMovement', value: 'charging' )
         return off()
     }
     if(mode == 'alarm'){
-    	//For debug only
-    	sendEvent(name: 'robotCleanerMovement', value: 'alarm' )
+        //For debug only
+        sendEvent(name: 'robotCleanerMovement', value: 'alarm' )
     }
     if(mode == 'powerOff'){
-    	//For debug only
-    	sendEvent(name: 'robotCleanerMovement', value: 'powerOff' )
+        //For debug only
+        sendEvent(name: 'robotCleanerMovement', value: 'powerOff' )
     }
     if(mode == 'reserve'){
-    	//For debug only
-    	sendEvent(name: 'robotCleanerMovement', value: 'reserve')
+        //For debug only
+        sendEvent(name: 'robotCleanerMovement', value: 'reserve')
     }
     if(mode == 'point'){
-    	//For debug only
-    	sendEvent(name: 'robotCleanerMovement', value: 'point')
+        //For debug only
+        sendEvent(name: 'robotCleanerMovement', value: 'point')
     }
-	if(mode == 'after'){
-    	//For debug only
+    if(mode == 'after'){
+        //For debug only
         sendEvent(name: 'robotCleanerMovement', value: 'after')
     }
     if(mode == 'cleaning'){
-    	//For debug only
+        //For debug only
         //sendEvent(name: 'robotCleanerMovement', value: 'cleaning')
         return on()
     }
@@ -464,26 +465,26 @@ def on() {
     def status = device.latestValue("status")
     log.debug "On based on state - ${status}"
     //For debug only
-    sendEvent(name: 'switch', value: 'on') 
+    sendEvent(name: 'switch', value: 'on')
     sendEvent(name: 'robotCleanerMovement', value: 'cleaning')
-	//if(status == "paused")
-	if(status == "pausing") {
-	    return resume()
+    //if(status == "paused")
+    if(status == "pausing") {
+        return resume()
     } else {
-	    return start()
-	}
+        return start()
+    }
 }
 def off() {
     // Always return to dock..
-	def status = device.latestValue("status")
+    def status = device.latestValue("status")
     log.debug "Off based on state - ${status}"
     //For debug only
-    sendEvent(name: 'switch', value: 'off') 
+    sendEvent(name: 'switch', value: 'off')
     sendEvent(name: 'robotCleanerMovement', value: 'homing')
-	if(status == "paused") {
-    	return dock()
+    if(status == "paused") {
+        return dock()
     } else {
-	    return pauseAndDock()
+        return pauseAndDock()
     }
 }
 // Timed Session
@@ -491,7 +492,7 @@ def start() {
     sendEvent(name: "status", value: "starting")
     state.RoombaCmd = "start"
     runIn(15, poll)
-	return localAPI ? local_start() : apiGet()
+    return localAPI ? local_start() : apiGet()
 }
 def stop() {
     sendEvent(name: "status", value: "stopping")
@@ -501,7 +502,7 @@ def stop() {
 }
 def pauseAndDock() {
     sendEvent(name: "status", value: "pausing")
-	state.RoombaCmd = "pause"
+    state.RoombaCmd = "pause"
     return localAPI ? local_pauseAndDock() : apiGet()
 }
 def pause() {
@@ -511,15 +512,15 @@ def pause() {
     return localAPI ? local_pause() : apiGet()
 }
 def cancel() {
-	return off()
+    return off()
 }
 
 // Actions
 def dock() {
     sendEvent(name: "status", value: "docking")
-	state.RoombaCmd = "dock"
+    state.RoombaCmd = "dock"
     runIn(15, poll)
-	return localAPI ? local_dock() : apiGet()
+    return localAPI ? local_dock() : apiGet()
 }
 def resume() {
     sendEvent(name: "status", value: "resuming")
@@ -529,7 +530,7 @@ def resume() {
 }
 // API methods
 def parse(description) {
-	log.trace "GOT HERE"
+    log.trace "GOT HERE"
     def msg = parseLanMessage(description)
     log.trace "GOT MSG $msg"
     def headersAsString = msg.header // => headers as a string
@@ -542,8 +543,8 @@ def parse(description) {
 }
 
 def apiGet() {
-	log.debug "apiget"
-	if (local) return
+    log.debug "apiget"
+    if (local) return
     def request_query = ""
     def request_host = ""
     def encoded_str = "${roomba_username}:${roomba_password}".bytes.encodeBase64()
@@ -641,9 +642,9 @@ def setMissionHistory(data) {
 def setStatus(data) {
     def rstatus = data.robot_status
     def robotName = data.robotName
-	state.robotName = robotName
+    state.robotName = robotName
 
-	def mission = data.mission
+    def mission = data.mission
     def runstats = data.bbrun
     def cschedule = data.cleanSchedule
     def pmaint = data.preventativeMaintenance
@@ -667,7 +668,7 @@ def setStatus(data) {
     def num_cleaning_jobs = robot_history['nMssn']
     def num_dirt_detected = runtime_stats['nScrubs']
     def total_job_time = runtime_stats['hr']
-    
+
 
     def new_status = get_robot_status(current_phase, current_cycle, current_charge, readyCode)
     def roomba_value = get_robot_enum(current_phase, readyCode)
@@ -675,20 +676,20 @@ def setStatus(data) {
     log.debug("Robot updates -- ${roomba_value} + ${new_status}")
     //Set robotCleanerMovement state
     if(roomba_value == "cleaning"){
-    	state.robotCleanerMovement = "cleaning"
+        state.robotCleanerMovement = "cleaning"
     } else if(roomba_value == "paused"){
-    	state.robotCleanerMovement = "idle"
+        state.robotCleanerMovement = "idle"
     } else if (roomba_value == "docked"){
        state.robotCleanerMovement = "charging"
     } else if (roomba_value == "docking"){
-	   state.robotCleanerMovement = "homing"
+       state.robotCleanerMovement = "homing"
     } else if (roomba_value == "error"){
        state.robotCleanerMovement = "alarm"
     } else if (roomba_value == "bin-full"){
        state.robotCleanerMovement = "alarm"
     }
-    
-	//Set the state object
+
+    //Set the state object
     if(roomba_value == "cleaning") {
         state.switch = "on"
     } else {
@@ -744,7 +745,7 @@ def setStatus(data) {
     sendEvent(name: 'robotCleanerMovement', value: state.robotCleanerMovement)
 
 
-    
+
 }
 
 def get_robot_enum(current_phase, readyCode) {
@@ -828,32 +829,32 @@ def get_robot_status(current_phase, current_cycle, current_charge, readyCode) {
 /* local REST gw support */
 
 def lanEventHandler(evt) {
-	log.trace "GOT HERE"
+    log.trace "GOT HERE"
     def description = evt.description
     def hub = evt?.hubId
-	def parsedEvent = parseLanMessage(description)
-	log.trace "RECEIVED LAN EVENT: $parsedEvent"
-	
-/*   
+    def parsedEvent = parseLanMessage(description)
+    log.trace "RECEIVED LAN EVENT: $parsedEvent"
+
+/*
     //ping response
     if (parsedEvent.data && parsedEvent.data.service && (parsedEvent.data.service == "hch")) {
-	    def msg = parsedEvent.data
+        def msg = parsedEvent.data
         if (msg.result == "pong") {
-        	//log in successful to local server
+            //log in successful to local server
             log.info "Successfully contacted local server"
-			atomicState.hchPong = true
-        }   	
+            atomicState.hchPong = true
+        }
     }
-    
-    */    
+
+    */
 }
 
 private local_get(path, cbk) {
     def host = "$roomba_host:$roomba_port"
 
-	sendHubCommand(new physicalgraph.device.HubAction("""GET $path HTTP/1.1\r\nHOST: $host\r\n\r\n""", physicalgraph.device.Protocol.LAN, null, [callback: cbk])) 
+    sendHubCommand(new physicalgraph.device.HubAction("""GET $path HTTP/1.1\r\nHOST: $host\r\n\r\n""", physicalgraph.device.Protocol.LAN, null, [callback: cbk]))
     //if(hubResponse == null) {
-		//state.connection = "offline"
+        //state.connection = "offline"
     //} else {
         //state.connection = "online"
     //}
@@ -864,17 +865,17 @@ void local_dummy_cbk(physicalgraph.device.HubResponse hubResponse) {
 }
 
 void local_poll_cbk(physicalgraph.device.HubResponse hubResponse) {
-	//log.debug "hubResponse: ${hubResponse.class}"
+    //log.debug "hubResponse: ${hubResponse.class}"
     //log.debug hubResponse.dump()
      def status = hubResponse.status
      //log.debug "http status: ${status}"
      if(status == 200){
-    	connected()
+        connected()
         }
     def data = hubResponse.json
     def current_charge = data.batPct
     def robotName = data.name
-	state.robotName = robotName    
+    state.robotName = robotName
     def mission = data.cleanMissionStatus
     def current_cycle = mission.cycle
     def current_phase = mission.phase
@@ -884,42 +885,42 @@ void local_poll_cbk(physicalgraph.device.HubResponse hubResponse) {
     def num_cleaning_jobs = mission.nMssn
     def num_dirt_detected = data.bbrun.nScrubs
     def total_job_time = data.bbrun.hr
-    
-  
-    
+
+
+
 
     def new_status = get_robot_status(current_phase, current_cycle, current_charge, readyCode)
     def roomba_value = get_robot_enum(current_phase, readyCode)
     log.debug("Robot updates -- 2 ${roomba_value} + ${new_status}")
     //Set robotCleanerMovement state
-  	 if(roomba_value == "cleaning"){
-    	state.robotCleanerMovement = "cleaning"
+       if(roomba_value == "cleaning"){
+        state.robotCleanerMovement = "cleaning"
     } else if(roomba_value == "paused"){
-    	state.robotCleanerMovement = "idle"
+        state.robotCleanerMovement = "idle"
     } else if (roomba_value == "docked"){
        state.robotCleanerMovement = "charging"
     } else if (roomba_value == "docking"){
-	   state.robotCleanerMovement = "homing"
+       state.robotCleanerMovement = "homing"
     } else if (roomba_value == "error"){
        state.robotCleanerMovement = "alarm"
     } else if (roomba_value == "bin-full") {
        state.robotCleanerMovement = "alarm"
     }
-    
+
     //TODO def carpet_boost = get state from api
     //TODO Set state.robotCleanerTurboMode
-	
+
     //TODO def cleaning_passes = get state from api
     //TODO Set state.robotCleanerCleaningMode
-  
 
-  
+
+
     //Set the state object
     if(roomba_value == "cleaning") {
         state.switch = "on"
     } else {
         state.switch = "off"
-    }   
+    }
 
     /* Consumable state-changes */
     if(roomba_value == "bin-full") {
@@ -966,9 +967,9 @@ void local_poll_cbk(physicalgraph.device.HubResponse hubResponse) {
     sendEvent(name: "status", value: roomba_value)
     sendEvent(name: "switch", value: state.switch)
     sendEvent(name: "sessionStatus", value: state.sessionStatus)
-    sendEvent(name: "consumable", value: state.consumable) 
+    sendEvent(name: "consumable", value: state.consumable)
     sendEvent(name: "robotIpAddress", value: data.netinfo.addr)
-	sendEvent(name: 'robotCleanerMovement', value: state.robotCleanerMovement)
+    sendEvent(name: 'robotCleanerMovement', value: state.robotCleanerMovement)
     //TODO sendEvent(name: 'robotCleanerTurboMode', value: state.robotCleanerTurboMode)
     //TODO sendEvent(name: 'robotCleanerCleaningMode', value: state.robotCleanerCleaningMode)
 }
@@ -976,73 +977,73 @@ void local_poll_cbk(physicalgraph.device.HubResponse hubResponse) {
 //TODO private local_carpetBoost_auto
 //TODO private local_carpetBoost_performance
 //TODO private local_carpetBoost_eco
-	  
+
 //TODO private local_cleaningPasses_auto
 //TODO private local_cleaningPasses_one
 //TODO private local_CleaningPasses_two
 
 private local_poll() {
-	local_get('/api/local/config/preferences', 'local_poll_cbk')
+    local_get('/api/local/config/preferences', 'local_poll_cbk')
     runIn(30,timeout)
 }
 
 def connected() {
-	log.debug "Server is Online"
-	sendEvent(name: "DeviceWatch-DeviceStatus", value: "online")
+    log.debug "Server is Online"
+    sendEvent(name: "DeviceWatch-DeviceStatus", value: "online")
     state.timeout = 0
     unschedule(timeout)
 }
 
 def timeout() {
-	if (state.timeout == 1){
-    	log.error "Check server, not responding - Second Attempt"
-    	sendEvent(name: "DeviceWatch-DeviceStatus", value: "offline")
+    if (state.timeout == 1){
+        log.error "Check server, not responding - Second Attempt"
+        sendEvent(name: "DeviceWatch-DeviceStatus", value: "offline")
         } else if (state.timeout == 0) {
-    		log.error "Check server, not responding - First Attempt"
+            log.error "Check server, not responding - First Attempt"
             state.timeout = 1
             }
 }
 
 private local_start() {
-	local_get('/api/local/action/start', 'local_dummy_cbk')
+    local_get('/api/local/action/start', 'local_dummy_cbk')
 }
 
 private local_stop() {
-	local_get('/api/local/action/stop', 'local_dummy_cbk')
+    local_get('/api/local/action/stop', 'local_dummy_cbk')
 }
 
 private local_pause() {
-	local_get('/api/local/action/pause', 'local_dummy_cbk')
+    local_get('/api/local/action/pause', 'local_dummy_cbk')
 }
 
 private local_resume() {
-	local_get('/api/local/action/resume', 'local_dummy_cbk')
+    local_get('/api/local/action/resume', 'local_dummy_cbk')
 }
 
 private local_dock() {
-	local_get('/api/local/action/dock', 'local_dummy_cbk')
+    local_get('/api/local/action/dock', 'local_dummy_cbk')
 }
 
 private local_pauseAndDock() {
-	local_get('/api/local/action/pause', 'local_dummy_cbk')
-    pause(1000)
-	local_get('/api/local/action/dock', 'local_dummy_cbk')
+    local_get('/api/local/action/pause', 'local_dummy_cbk')
+    sleep(1000)
+    local_get('/api/local/action/dock', 'local_dummy_cbk')
 }
 
 //Get the IP address of robot in hex
 private getRobotAddress(){
-	def robothex = convertIPtoHex(state.robotIpAddress).toUpperCase()
-	return robothex
+    def robothex = convertIPtoHex(state.robotIpAddress).toUpperCase()
+    return robothex
 }
 
 def updateDeviceNetworkID() {
-	log.debug "Executing 'updateDeviceNetworkID'"
+    log.debug "Executing 'updateDeviceNetworkID'"
     def iphex = convertIPtoHex(roomba_host).toUpperCase()
     def porthex = convertPortToHex(roomba_port).toUpperCase()
-	device.setDeviceNetworkId(iphex + ":" + porthex)
+    device.setDeviceNetworkId(iphex + ":" + porthex)
 }
 
-private String convertIPtoHex(ipAddress) { 
+private String convertIPtoHex(ipAddress) {
     String hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02x', it.toInteger() ) }.join()
     //log.debug "IP address entered is $ipAddress and the converted hex code is $hex"
     return hex
