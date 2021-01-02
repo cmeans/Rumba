@@ -36,7 +36,7 @@ def getRoombaStates() {
 	return ROOMBA_STATES
 }
 metadata {
-	definition (name: "Rumba", namespace: "mvevitsis", author: "Matvei Vevitsis", ocfDeviceType: "oic.d.robotcleaner") {
+	definition (name: "Rumba", namespace: "cmeans", author: "Matvei Vevitsis", ocfDeviceType: "oic.d.robotcleaner") {
 		capability "robotCleanerMovement"
 		//capability "robotCleanerCleaningMode"
 		//capability "robotCleanerTurboMode"
